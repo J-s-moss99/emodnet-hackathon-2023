@@ -1,0 +1,37 @@
+library(tidyverse)
+library(worrms)
+
+
+rayspp <- read.csv("C:/Users/Jordan/Desktop/rayspp.csv")
+
+# creates a list of all unique species in the scientificname column
+species_list <- rayspp %>% dplyr::select(Latin) %>%
+  dplyr::distinct() %>% dplyr::pull(Latin)
+
+# sends species list to worrms API
+worms_rec <-worrms::wm_records_names(name =species_list) # returns list of data frames
+
+# bind dataframes into a single dataframe and filter out unaccepted names
+worms_rec_df <- worms_rec %>% dplyr::bind_rows() %>%
+  dplyr::filter(status=="accepted")
+
+
+my_sp_taxo <- bind_rows(worms_rec_df)
+glimpse(my_sp_taxo)
+
+# install robis package 
+#library(devtools)
+#devtools::install_github("iobis/robis")
+install.packages("robis")
+install.packages("ggmap")
+# NB - if we want to map later this is cool dev version of ggmap for the satellite maps to work
+library(robis)
+library(ggmap)
+library(raster)
+
+my_occs <- occurrence(scientificname = my_sp_taxo$valid_name[2])
+bb_occs <- bbox(cbind(my_occs$decimalLongitude, my_occs$decimalLatitude))
+bb_occs
+##min     max
+#x -17.4000 16.8800
+#y -29.4033 61.1667
